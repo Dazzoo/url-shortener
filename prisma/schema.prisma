@@ -42,4 +42,4 @@ model Analytics {
   country   String?
   device    String?
   createdAt DateTime @default(now())
-} 
+}
