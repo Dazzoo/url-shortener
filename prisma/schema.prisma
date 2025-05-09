@@ -22,14 +22,14 @@ model Url {
   shortCode   String     @unique
   longUrl     String
   title       String?
-  userId      String
-  user        User       @relation(fields: [userId], references: [id])
   clicks      Int        @default(0)
   isActive    Boolean    @default(true)
   expiresAt   DateTime?
   analytics   Analytics[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model Analytics {

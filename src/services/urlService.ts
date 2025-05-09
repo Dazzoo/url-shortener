@@ -2,21 +2,36 @@ import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
 
 export class UrlService {
-  static async createUrl(longUrl: string, customCode?: string) {
+  static async createUrl(longUrl: string, customCode?: string, userId?: string) {
     const shortCode = customCode || nanoid(6)
     
+    const data: any = {
+      shortCode,
+      longUrl,
+    }
+
+    // Only add user relation if userId is provided
+    if (userId) {
+      data.user = {
+        connect: { id: userId }
+      }
+    }
+    
     return prisma.url.create({
-      data: {
-        shortCode,
-        longUrl,
-        userId: 'temp-user-id', // We'll add proper auth later
-      },
+      data
     })
   }
 
-  static async getUrlByCode(shortCode: string) {
+  static async getUrlByCode(code: string) {
     return prisma.url.findUnique({
-      where: { shortCode },
+      where: { shortCode: code },
+    })
+  }
+
+  static async incrementClicks(urlId: string) {
+    return prisma.url.update({
+      where: { id: urlId },
+      data: { clicks: { increment: 1 } },
     })
   }
 
@@ -33,10 +48,16 @@ export class UrlService {
     })
   }
 
-  static async incrementClicks(urlId: string) {
-    return prisma.url.update({
+  static async getAnalytics(urlId: string, userId?: string) {
+    // Only return analytics if the user owns the URL
+    const url = await prisma.url.findUnique({
       where: { id: urlId },
-      data: { clicks: { increment: 1 } },
+      include: { analytics: true },
     })
+
+    if (!url) return null
+    if (userId && url.userId !== userId) return null
+
+    return url.analytics
   }
 } 
