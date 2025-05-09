@@ -9,4 +9,18 @@ export const urlSchema = z.object({
     .optional(),
 })
 
-export type UrlInput = z.infer<typeof urlSchema> 
+export const urlResponseSchema = z.object({
+  id: z.string(),
+  shortCode: z.string(),
+  longUrl: z.string(),
+  title: z.string().optional(),
+  clicks: z.number(),
+  isActive: z.boolean(),
+  expiresAt: z.date().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+})
+
+// Export types derived from schemas
+export type CreateUrlRequest = z.infer<typeof urlSchema>
+export type UrlResponse = z.infer<typeof urlResponseSchema> 

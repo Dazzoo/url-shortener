@@ -16,6 +16,20 @@ export async function GET(
       )
     }
 
+    if (!url.isActive) {
+      return NextResponse.json(
+        { error: 'URL is no longer active' },
+        { status: 410 }
+      )
+    }
+
+    if (url.expiresAt && url.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'URL has expired' },
+        { status: 410 }
+      )
+    }
+
     // Prepare analytics data
     const analyticsData = {
       ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
@@ -35,6 +49,7 @@ export async function GET(
     // Redirect to the long URL
     return NextResponse.redirect(url.longUrl)
   } catch (error) {
+    console.error('Error processing URL:', error)
     return NextResponse.json(
       { error: 'Failed to process URL' },
       { status: 500 }

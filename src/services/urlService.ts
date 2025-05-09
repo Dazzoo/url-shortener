@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
+import { Prisma } from '@prisma/client'
 
 export class UrlService {
   static async createUrl(longUrl: string, customCode?: string, userId?: string) {
     const shortCode = customCode || nanoid(6)
     
-    const data: any = {
+    const data: Prisma.UrlCreateInput = {
       shortCode,
       longUrl,
     }
@@ -17,14 +18,18 @@ export class UrlService {
       }
     }
     
-    return prisma.url.create({
-      data
-    })
+    return prisma.url.create({ data })
   }
 
   static async getUrlByCode(code: string) {
     return prisma.url.findUnique({
       where: { shortCode: code },
+      include: {
+        analytics: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
     })
   }
 
@@ -49,15 +54,31 @@ export class UrlService {
   }
 
   static async getAnalytics(urlId: string, userId?: string) {
-    // Only return analytics if the user owns the URL
     const url = await prisma.url.findUnique({
       where: { id: urlId },
-      include: { analytics: true },
+      include: {
+        analytics: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
     })
 
     if (!url) return null
     if (userId && url.userId !== userId) return null
 
     return url.analytics
+  }
+
+  static async deleteUrl(urlId: string, userId?: string) {
+    const url = await prisma.url.findUnique({
+      where: { id: urlId }
+    })
+
+    if (!url) return null
+    if (userId && url.userId !== userId) return null
+
+    return prisma.url.delete({
+      where: { id: urlId }
+    })
   }
 } 

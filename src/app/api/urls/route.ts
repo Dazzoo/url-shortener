@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { UrlService } from '@/services/urlService'
 import { urlSchema } from '@/schemas'
+import { Prisma } from '@prisma/client'
 
 // POST route to create a new URL
 export async function POST(req: Request) {
@@ -21,6 +22,16 @@ export async function POST(req: Request) {
     return NextResponse.json(url)
   } catch (error) {
     console.error('Error creating URL:', error)
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'Custom code already exists' },
+          { status: 409 }
+        )
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to create URL' },
       { status: 500 }
@@ -52,6 +63,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(url)
   } catch (error) {
+    console.error('Error fetching URL:', error)
     return NextResponse.json(
       { error: 'Failed to fetch URL' },
       { status: 500 }
