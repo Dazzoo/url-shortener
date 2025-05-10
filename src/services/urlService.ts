@@ -24,7 +24,7 @@ export class UrlService {
     const url = await prisma.url.create({ data })
     
     // Cache the new URL
-    await redis.setex(`url:${shortCode}`, CACHE_TTL, JSON.stringify(url))
+    await redis.setEx(`url:${shortCode}`, CACHE_TTL, JSON.stringify(url))
     
     return url
   }
@@ -49,7 +49,7 @@ export class UrlService {
 
     // Cache the result if found
     if (url) {
-      await redis.setex(`url:${code}`, CACHE_TTL, JSON.stringify(url))
+      await redis.setEx(`url:${code}`, CACHE_TTL, JSON.stringify(url))
     }
 
     return url
@@ -65,7 +65,7 @@ export class UrlService {
     const cachedUrl = await redis.get(`url:${url.shortCode}`)
     if (cachedUrl) {
       const updatedUrl = { ...JSON.parse(cachedUrl), clicks: url.clicks }
-      await redis.setex(`url:${url.shortCode}`, CACHE_TTL, JSON.stringify(updatedUrl))
+      await redis.setEx(`url:${url.shortCode}`, CACHE_TTL, JSON.stringify(updatedUrl))
     }
 
     return url
