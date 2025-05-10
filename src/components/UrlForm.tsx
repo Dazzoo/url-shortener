@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createUrl } from '@/web-services/urls'
 import type { CreateUrlRequest, UrlResponse } from '@/schemas'
 
@@ -13,21 +13,43 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [generateQR, setGenerateQR] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+
+  // Load the generateQR state from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedGenerateQR = localStorage.getItem('generateQR')
+      if (storedGenerateQR) {
+        setGenerateQR(storedGenerateQR === 'true')
+      }
+    }
+  }, [])
+
+  // Save the generateQR state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('generateQR', generateQR.toString())
+    }
+  }, [generateQR])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+    setQrCode(null)
 
     try {
       const data: CreateUrlRequest = {
         longUrl: url,
         customCode: customCode || undefined,
+        generateQR,
       }
 
       const result = await createUrl(data)
       const fullShortUrl = `${window.location.origin}/${result.shortCode}`
       setShortUrl(fullShortUrl)
+      setQrCode(result.qrCode)
       onUrlCreated(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create URL')
@@ -45,6 +67,36 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
       console.error('Failed to copy:', err)
     }
   }
+
+  const downloadQRCode = () => {
+    if (!qrCode) return
+
+    const link = document.createElement('a')
+    link.href = qrCode
+    link.download = 'qrcode.png'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const renderQRCode = (qrCodeData: string) => (
+    <div className="mt-4 flex flex-col items-center">
+      <img
+        src={qrCodeData}
+        alt="QR Code"
+        className="w-48 h-48 mb-2"
+      />
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          downloadQRCode()
+        }}
+        className="cursor-pointer text-sm text-blue-600 hover:text-blue-500"
+      >
+        Download QR Code
+      </button>
+    </div>
+  )
 
   return (
     <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8">
@@ -82,6 +134,27 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
               placeholder="my-short-url"
             />
           </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-4">
+          <label htmlFor="generateQR" className="text-sm font-medium text-gray-700">
+            Generate QR Code
+          </label>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={generateQR || false}
+            onClick={() => setGenerateQR(!generateQR)}
+            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              generateQR ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                generateQR ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         <div>
@@ -147,9 +220,11 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
                     {isCopied ? '✓ Copied!' : '(click to copy)'}
                   </span>
                 </div>
+
               </div>
             </div>
           </div>
+          {qrCode && renderQRCode(qrCode)}
         </div>
       )}
     </div>

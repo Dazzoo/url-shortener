@@ -2,16 +2,33 @@ import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
 import { Prisma } from '@prisma/client'
 import redis from '@/lib/redis'
+import QRCode from 'qrcode'
 
 const CACHE_TTL = 60 * 60 // 1 hour in seconds
 
 export class UrlService {
-  static async createUrl(longUrl: string, customCode?: string, userId?: string) {
+  static async createUrl(longUrl: string, customCode?: string, userId?: string, generateQR?: boolean) {
     const shortCode = customCode || nanoid(6)
+    
+    // Generate QR code if requested
+    let qrCode = null
+    if (generateQR) {
+      const fullShortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${shortCode}`
+      qrCode = await QRCode.toDataURL(fullShortUrl, {
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        width: 300,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      })
+    }
     
     const data: Prisma.UrlCreateInput = {
       shortCode,
       longUrl,
+      qrCode,
     }
 
     // Only add user relation if userId is provided

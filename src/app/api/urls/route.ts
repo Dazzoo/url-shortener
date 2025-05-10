@@ -5,11 +5,11 @@ import { Prisma } from '@prisma/client'
 
 // POST route to create a new URL
 export async function POST(req: Request) {
-  try {
-    const body = await req.json()
+  const body = await req.json()
     
-    // Validate input
-    const result = urlSchema.safeParse(body)
+  // Validate input
+  const result = urlSchema.safeParse(body)
+  try {
     if (!result.success) {
       return NextResponse.json(
         { error: 'Invalid input', details: result.error.format() },
@@ -17,8 +17,8 @@ export async function POST(req: Request) {
       )
     }
 
-    const { longUrl, customCode } = result.data
-    const url = await UrlService.createUrl(longUrl, customCode)
+    const { longUrl, customCode, generateQR } = result.data
+    const url = await UrlService.createUrl(longUrl, customCode, undefined, generateQR)
     return NextResponse.json(url)
   } catch (error) {
     console.error('Error creating URL:', error)
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         return NextResponse.json(
-          { error: 'Custom code already exists' },
+          { error: `Custom code ${result?.data?.customCode} already exists, please try a different one.` },
           { status: 409 }
         )
       }

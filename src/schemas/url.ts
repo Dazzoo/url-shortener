@@ -7,6 +7,9 @@ export const urlSchema = z.object({
     .max(20, 'Custom code must be less than 20 characters')
     .regex(/^[a-zA-Z0-9-_]+$/, 'Custom code can only contain letters, numbers, hyphens, and underscores')
     .optional(),
+  generateQR: z.boolean().optional(),
+  title: z.string().optional(),
+  expiresAt: z.date().optional(),
 })
 
 export const urlResponseSchema = z.object({
@@ -19,8 +22,10 @@ export const urlResponseSchema = z.object({
   expiresAt: z.date().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  userId: z.string().nullable(),
 })
 
 // Export types derived from schemas
 export type CreateUrlRequest = z.infer<typeof urlSchema>
 export type UrlResponse = z.infer<typeof urlResponseSchema> 
+
