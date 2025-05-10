@@ -16,9 +16,64 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Database
+The project uses PostgreSQL as its database. Make sure you have PostgreSQL installed and running.
+
+### Redis
+The project uses Redis for caching. Make sure you have Redis installed and running.
+
+#### Installing Redis
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install redis-server
+sudo systemctl start redis-server
+```
+
+**macOS:**
+```bash
+brew install redis
+brew services start redis
+```
+
+**Windows:**
+Download and install Redis from [Redis Windows Downloads](https://github.com/microsoftarchive/redis/releases)
+
+#### Environment Variables
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/url_shortener"
+
+# Redis
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+REDIS_PASSWORD=""
+
+# Auth
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Email
+EMAIL_SERVER_HOST="smtp.example.com"
+EMAIL_SERVER_PORT="587"
+EMAIL_SERVER_USER="your-email@example.com"
+EMAIL_SERVER_PASSWORD="your-email-password"
+EMAIL_FROM="noreply@example.com"
+```
+
+## Features
+
+- URL shortening with custom codes
+- Redis caching for improved performance
+- Analytics tracking
+- User authentication
+- Rate limiting
+- Email notifications
 
 ## Learn More
 
