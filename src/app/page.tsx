@@ -19,7 +19,7 @@ export default function Home() {
   }, [])
 
   const handleUrlCreated = (url: UrlResponse) => {
-    const updatedUrls = [url, ...recentUrls.slice(0, 9)] // Keep latest 10
+    const updatedUrls = [url, ...recentUrls.slice(0, 29)] // Keep latest 30
     setRecentUrls(updatedUrls)
     localStorage.setItem('recentUrls', JSON.stringify(updatedUrls))
   }
