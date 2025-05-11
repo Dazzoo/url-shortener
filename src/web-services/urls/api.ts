@@ -1,4 +1,4 @@
-import { urlSchema, type CreateUrlRequest, type UrlResponse } from '@/schemas/url'
+import { type CreateUrlRequest, type UrlResponse } from '@/schemas/url'
 
 const API_URL = '/api/urls'
 
@@ -10,6 +10,10 @@ export async function createUrl(data: CreateUrlRequest): Promise<UrlResponse> {
     },
     body: JSON.stringify(data),
   })
+
+  if (response.status === 409) {
+    throw new Error('Custom code already exists')
+  } 
 
   if (!response.ok) {
     const error = await response.json()

@@ -21,7 +21,6 @@ export async function POST(req: Request) {
     const url = await UrlService.createUrl({ longUrl, customCode, generateQR })
     return NextResponse.json(url)
   } catch (error) {
-    console.error('Error creating URL:', error)
     
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
