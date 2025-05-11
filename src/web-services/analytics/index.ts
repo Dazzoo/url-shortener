@@ -1,4 +1,4 @@
-import { AnalyticsData, AnalyticsResponse } from "@/schemas/analytics"
+import { AnalyticsData } from "@/schemas/analytics"
 
 const API_URL = '/api/urls'
 
