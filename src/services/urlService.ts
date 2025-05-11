@@ -1,14 +1,14 @@
 import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
 import { Prisma } from '@prisma/client'
-import redis from '@/lib/redis'
+import { RedisService } from './redisService'
+import { urlResponseSchema } from '@/schemas'
 import QRCode from 'qrcode'
 
-const CACHE_TTL = 60 * 60 // 1 hour in seconds
 
 export class UrlService {
-  static async createUrl(longUrl: string, customCode?: string, userId?: string, generateQR?: boolean) {
-    const shortCode = customCode || nanoid(6)
+  static async createUrl(longUrl: string, customCode?: string, userId?: string, generateQR?: boolean): Promise<typeof urlResponseSchema._type> {
+    const shortCode = customCode || nanoid(10)
     
     // Generate QR code if requested
     let qrCode = null
@@ -40,36 +40,61 @@ export class UrlService {
     
     const url = await prisma.url.create({ data })
     
-    // Cache the new URL
-    await redis.setEx(`url:${shortCode}`, CACHE_TTL, JSON.stringify(url))
+    const validatedUrl = urlResponseSchema.parse(url)
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(shortCode), validatedUrl)
     
-    return url
+    return validatedUrl
   }
 
-  static async getUrlByCode(code: string) {
-    // Try to get from cache first
-    const cachedUrl = await redis.get(`url:${code}`)
-    if (cachedUrl) {
-      return JSON.parse(cachedUrl)
+  static async getUrlByShortCode(shortCode: string): Promise<typeof urlResponseSchema._type | null> {
+    // Try cache first
+    const cached = await RedisService.get(
+      RedisService.getShortCodeKey(shortCode),
+      urlResponseSchema
+    )
+    if (cached) {
+      return cached
     }
 
-    // If not in cache, get from database
     const url = await prisma.url.findUnique({
-      where: { shortCode: code },
-      include: {
-        analytics: {
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        }
-      }
+      where: { shortCode },
     })
 
-    // Cache the result if found
-    if (url) {
-      await redis.setEx(`url:${code}`, CACHE_TTL, JSON.stringify(url))
+    if (!url) {
+      return null
     }
 
-    return url
+    const validatedUrl = urlResponseSchema.parse(url)
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(shortCode), validatedUrl)
+
+    return validatedUrl
+  }
+
+  static async getUrlById(id: string): Promise<typeof urlResponseSchema._type | null> {
+    // Try cache first
+    const cached = await RedisService.get(
+      RedisService.getUrlKey(id),
+      urlResponseSchema
+    )
+    if (cached) {
+      return cached
+    }
+
+    const url = await prisma.url.findUnique({
+      where: { id },
+    })
+
+    if (!url) {
+      return null
+    }
+
+    const validatedUrl = urlResponseSchema.parse(url)
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(url.shortCode), validatedUrl)
+
+    return validatedUrl
   }
 
   static async incrementClicks(urlId: string) {
@@ -79,10 +104,10 @@ export class UrlService {
     })
 
     // Update cache if exists
-    const cachedUrl = await redis.get(`url:${url.shortCode}`)
+    const cachedUrl = await RedisService.get(RedisService.getUrlKey(url.id), urlResponseSchema)
     if (cachedUrl) {
-      const updatedUrl = { ...JSON.parse(cachedUrl), clicks: url.clicks }
-      await redis.setEx(`url:${url.shortCode}`, CACHE_TTL, JSON.stringify(updatedUrl))
+      const updatedUrl = { ...cachedUrl, clicks: url.clicks }
+      await RedisService.set(RedisService.getUrlKey(url.id), updatedUrl)
     }
 
     return url
@@ -101,35 +126,19 @@ export class UrlService {
     })
   }
 
-  static async getAnalytics(urlId: string, userId?: string) {
+  static async deleteUrl(id: string): Promise<void> {
     const url = await prisma.url.findUnique({
-      where: { id: urlId },
-      include: {
-        analytics: {
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+      where: { id },
     })
 
-    if (!url) return null
-    if (userId && url.userId !== userId) return null
+    if (url) {
+      await prisma.url.delete({
+        where: { id },
+      })
 
-    return url.analytics
-  }
-
-  static async deleteUrl(urlId: string, userId?: string) {
-    const url = await prisma.url.findUnique({
-      where: { id: urlId }
-    })
-
-    if (!url) return null
-    if (userId && url.userId !== userId) return null
-
-    // Delete from cache
-    await redis.del(`url:${url.shortCode}`)
-
-    return prisma.url.delete({
-      where: { id: urlId }
-    })
+      // Invalidate cache
+      await RedisService.del(RedisService.getUrlKey(id))
+      await RedisService.del(RedisService.getShortCodeKey(url.shortCode))
+    }
   }
 } 
