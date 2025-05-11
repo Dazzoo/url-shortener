@@ -1,27 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { UrlResponse } from '@/schemas'
+import type { UrlResponse } from '@/schemas/url'
 import { UrlForm } from '@/components/UrlForm'
 import { RecentUrls } from '@/components/RecentUrls'
 import { FeatureCard } from '@/components/FeatureCard'
-import { QrCode, FileBarChart, Link   } from 'lucide-react'
+import { QrCode, FileBarChart, Link } from 'lucide-react'
+import { localStorageUtils } from '@/lib/localStorage'
 
 export default function Home() {
   const [recentUrls, setRecentUrls] = useState<UrlResponse[]>([])
 
   useEffect(() => {
     // Load recent URLs from localStorage on component mount
-    const savedUrls = localStorage.getItem('recentUrls')
-    if (savedUrls) {
-      setRecentUrls(JSON.parse(savedUrls))
+    const loadRecentUrls = async () => {
+      const savedUrls = await localStorageUtils.getRecentUrls()
+      if (savedUrls) {
+        setRecentUrls(savedUrls)
+      }
     }
+    loadRecentUrls()
   }, [])
 
-  const handleUrlCreated = (url: UrlResponse) => {
+  const handleUrlCreated = async (url: UrlResponse) => {
     const updatedUrls = [url, ...recentUrls.slice(0, 29)] // Keep latest 30
     setRecentUrls(updatedUrls)
-    localStorage.setItem('recentUrls', JSON.stringify(updatedUrls))
+    localStorageUtils.addRecentUrl(url)
   }
 
   return (

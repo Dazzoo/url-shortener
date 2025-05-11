@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const { longUrl, customCode, generateQR } = result.data
-    const url = await UrlService.createUrl(longUrl, customCode, undefined, generateQR)
+    const url = await UrlService.createUrl({ longUrl, customCode, generateQR })
     return NextResponse.json(url)
   } catch (error) {
     console.error('Error creating URL:', error)

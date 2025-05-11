@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const code = params.code
-    const url = await UrlService.getUrlByCode(code)
+    const url = await UrlService.getUrlByShortCode(code)
 
     if (!url) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { createUrl } from '@/web-services/urls'
-import type { CreateUrlRequest, UrlResponse } from '@/schemas'
+import { createUrl } from '@/web-services/urls/api'
+import type { CreateUrlRequest, UrlResponse } from '@/schemas/url'
+import { localStorageUtils } from '@/lib/localStorage'
 
 interface UrlFormProps {
   onUrlCreated: (url: UrlResponse) => void
@@ -18,19 +19,18 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
 
   // Load the generateQR state from localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedGenerateQR = localStorage.getItem('generateQR')
-      if (storedGenerateQR) {
-        setGenerateQR(storedGenerateQR === 'true')
+    const loadGenerateQR = async () => {
+      const storedGenerateQR = await localStorageUtils.get<boolean>('generateQR')
+      if (storedGenerateQR !== null) {
+        setGenerateQR(storedGenerateQR)
       }
     }
+    loadGenerateQR()
   }, [])
 
   // Save the generateQR state to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('generateQR', generateQR.toString())
-    }
+    localStorageUtils.set('generateQR', generateQR)
   }, [generateQR])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,7 +220,6 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
                     {isCopied ? '✓ Copied!' : '(click to copy)'}
                   </span>
                 </div>
-
               </div>
             </div>
           </div>

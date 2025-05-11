@@ -6,6 +6,7 @@ import { FileBarChart } from 'lucide-react'
 import { UrlList } from '@/components/analytics/UrlList'
 import { AnalyticsOverview } from '@/components/analytics/AnalyticsOverview'
 import { TopItemsList } from '@/components/analytics/TopItemsList'
+import { localStorageUtils } from '@/lib/localStorage'
 
 interface AnalyticsData {
   urlId: string
@@ -25,9 +26,9 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     // Load URLs from localStorage
-    const savedUrls = localStorage.getItem('recentUrls')
+    const savedUrls = localStorageUtils.getRecentUrls()
     if (savedUrls) {
-      setUrls(JSON.parse(savedUrls))
+      setUrls(savedUrls)
     }
     setLoading(false)
   }, [])

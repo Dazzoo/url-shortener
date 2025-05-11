@@ -25,11 +25,15 @@ model Url {
   clicks      Int        @default(0)
   isActive    Boolean    @default(true)
   expiresAt   DateTime?
+  qrCode      String?    // Base64 encoded QR code
   analytics   Analytics[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   userId      String?
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([shortCode])
+  @@index([userId])
 }
 
 model Analytics {

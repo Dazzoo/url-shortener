@@ -2,49 +2,134 @@ import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
 import { Prisma } from '@prisma/client'
 import { RedisService } from './redisService'
-import { urlResponseSchema } from '@/schemas'
+import { urlResponseSchema, type CreateUrlRequest } from '@/schemas/url'
 import QRCode from 'qrcode'
+import { generateQRCode } from '@/lib/qrCode'
 
 
 export class UrlService {
-  static async createUrl(longUrl: string, customCode?: string, userId?: string, generateQR?: boolean): Promise<typeof urlResponseSchema._type> {
-    const shortCode = customCode || nanoid(10)
+  static async createUrl(data: CreateUrlRequest) {
+    const shortCode = data.customCode || await this.generateShortCode()
     
     // Generate QR code if requested
     let qrCode = null
-    if (generateQR) {
-      const fullShortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${shortCode}`
-      qrCode = await QRCode.toDataURL(fullShortUrl, {
-        errorCorrectionLevel: 'H',
-        margin: 1,
-        width: 300,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      })
-    }
-    
-    const data: Prisma.UrlCreateInput = {
-      shortCode,
-      longUrl,
-      qrCode,
+    if (data.generateQR) {
+      const fullUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${shortCode}`
+      qrCode = await generateQRCode(fullUrl)
     }
 
-    // Only add user relation if userId is provided
-    if (userId) {
-      data.user = {
-        connect: { id: userId }
+    const url = await prisma.url.create({
+      data: {
+        shortCode,
+        longUrl: data.longUrl,
+        title: data.title || null,
+        qrCode,
       }
-    }
-    
-    const url = await prisma.url.create({ data })
+    })
     
     const validatedUrl = urlResponseSchema.parse(url)
+    
+    // Cache in Redis
     await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
     await RedisService.set(RedisService.getShortCodeKey(shortCode), validatedUrl)
     
     return validatedUrl
+  }
+
+  static async getUrlByCode(code: string) {
+    // Try cache first
+    const cached = await RedisService.get(
+      RedisService.getShortCodeKey(code),
+      urlResponseSchema
+    )
+    if (cached) {
+      return cached
+    }
+
+    const url = await prisma.url.findUnique({
+      where: { shortCode: code }
+    })
+    
+    if (!url) return null
+    
+    const validatedUrl = urlResponseSchema.parse(url)
+    
+    // Cache in Redis
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(code), validatedUrl)
+    
+    return validatedUrl
+  }
+
+  static async getUrlById(id: string) {
+    // Try cache first
+    const cached = await RedisService.get(
+      RedisService.getUrlKey(id),
+      urlResponseSchema
+    )
+    if (cached) {
+      return cached
+    }
+
+    const url = await prisma.url.findUnique({
+      where: { id }
+    })
+    
+    if (!url) return null
+    
+    const validatedUrl = urlResponseSchema.parse(url)
+    
+    // Cache in Redis
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(url.shortCode), validatedUrl)
+    
+    return validatedUrl
+  }
+
+  static async updateUrl(id: string, data: Partial<CreateUrlRequest>) {
+    // Get existing URL first to access shortCode
+    const existingUrl = await prisma.url.findUnique({
+      where: { id }
+    })
+    
+    if (!existingUrl) {
+      throw new Error('URL not found')
+    }
+
+    const url = await prisma.url.update({
+      where: { id },
+      data: {
+        longUrl: data.longUrl,
+        title: data.title,
+        // Generate new QR code if requested
+        qrCode: data.generateQR 
+          ? await generateQRCode(`${process.env.NEXT_PUBLIC_APP_URL}/${existingUrl.shortCode}`)
+          : undefined
+      }
+    })
+    
+    const validatedUrl = urlResponseSchema.parse(url)
+    
+    // Update cache
+    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
+    await RedisService.set(RedisService.getShortCodeKey(url.shortCode), validatedUrl)
+    
+    return validatedUrl
+  }
+
+  private static async generateShortCode(): Promise<string> {
+    const length = 6
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let shortCode: string
+    
+    do {
+      shortCode = Array.from(
+        { length },
+        () => chars[Math.floor(Math.random() * chars.length)]
+      ).join('')
+    } while (await prisma.url.findUnique({ where: { shortCode } }))
+    
+    return shortCode
   }
 
   static async getUrlByShortCode(shortCode: string): Promise<typeof urlResponseSchema._type | null> {
@@ -68,31 +153,6 @@ export class UrlService {
     const validatedUrl = urlResponseSchema.parse(url)
     await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
     await RedisService.set(RedisService.getShortCodeKey(shortCode), validatedUrl)
-
-    return validatedUrl
-  }
-
-  static async getUrlById(id: string): Promise<typeof urlResponseSchema._type | null> {
-    // Try cache first
-    const cached = await RedisService.get(
-      RedisService.getUrlKey(id),
-      urlResponseSchema
-    )
-    if (cached) {
-      return cached
-    }
-
-    const url = await prisma.url.findUnique({
-      where: { id },
-    })
-
-    if (!url) {
-      return null
-    }
-
-    const validatedUrl = urlResponseSchema.parse(url)
-    await RedisService.set(RedisService.getUrlKey(url.id), validatedUrl)
-    await RedisService.set(RedisService.getShortCodeKey(url.shortCode), validatedUrl)
 
     return validatedUrl
   }
