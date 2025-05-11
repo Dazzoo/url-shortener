@@ -7,6 +7,7 @@ import { UrlList } from '@/components/analytics/UrlList'
 import { AnalyticsOverview } from '@/components/analytics/AnalyticsOverview'
 import { TopItemsList } from '@/components/analytics/TopItemsList'
 import { localStorageUtils } from '@/lib/localStorage'
+import { getAnalytics } from '@/web-services/analytics'
 
 interface AnalyticsData {
   urlId: string
@@ -42,11 +43,7 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async (urlId: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/urls/${urlId}/analytics`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics')
-      }
-      const data = await response.json()
+      const data = await getAnalytics(urlId)
       setAnalytics(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch analytics')

@@ -31,6 +31,8 @@ export function RecentUrls({ urls }: RecentUrlsProps) {
     document.body.removeChild(link)
   }
 
+  console.log("displayedUrls", displayedUrls)
+
   if (urls.length === 0) return null
 
   return (
