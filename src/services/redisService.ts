@@ -42,7 +42,7 @@ export class RedisService {
 
   static async mget<T>(keys: string[], schema: z.ZodType<T>): Promise<(T | null)[]> {
     try {
-      const cached = await this.redis.mget(keys)
+      const cached = await this.redis.mGet(keys)
       return cached.map(item => {
         if (!item) return null
         try {
