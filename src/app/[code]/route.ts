@@ -3,10 +3,10 @@ import { UrlService } from '@/services/urlService'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const code = params.code
+    const code = (await params).code
     const url = await UrlService.getUrlByShortCode(code)
 
     if (!url) {

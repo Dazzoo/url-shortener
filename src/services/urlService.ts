@@ -1,13 +1,9 @@
 import { prisma } from '@/lib/db'
-import { nanoid } from 'nanoid'
-import { Prisma } from '@prisma/client'
 import { RedisService } from './redisService'
-import { urlResponseSchema, type CreateUrlRequest, UrlResponse } from '@/schemas/url'
-import QRCode from 'qrcode'
+import { urlResponseSchema, type CreateUrlRequest } from '@/schemas/url'
 import { generateQRCode } from '@/lib/qrCode'
 import { UAParser } from 'ua-parser-js'
 import { GeoService } from './geoService'
-
 
 export class UrlService {
   static async createUrl(data: CreateUrlRequest) {

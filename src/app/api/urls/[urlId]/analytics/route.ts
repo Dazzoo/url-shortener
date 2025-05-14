@@ -4,10 +4,11 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { urlId: string } }
+  { params }: { params: Promise<{ urlId: string }> }
 ) {
   try {
-    const analytics = await AnalyticsService.getAnalytics(params.urlId)
+    const urlId = (await params).urlId
+    const analytics = await AnalyticsService.getAnalytics(urlId)
 
     if (!analytics) {
       return NextResponse.json(
