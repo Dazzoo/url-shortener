@@ -1,6 +1,4 @@
 import { FileBarChart } from 'lucide-react'
-import { AnalyticsOverview } from './AnalyticsOverview'
-import { TopItemsList } from './TopItemsList'
 import { AnalyticsSkeleton } from './AnalyticsSkeleton'
 
 interface AnalyticsData {

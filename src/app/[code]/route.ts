@@ -30,9 +30,20 @@ export async function GET(
       )
     }
 
+    // Get real IP address
+    const forwardedFor = request.headers.get('x-forwarded-for')
+    const realIP = request.headers.get('x-real-ip')
+    const ipAddress = forwardedFor?.split(',')[0] || realIP || undefined
+
+    console.log('IP Address detection:', {
+      forwardedFor,
+      realIP,
+      finalIP: ipAddress
+    })
+
     // Record analytics
     await UrlService.recordAnalytics(url.id, {
-      ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || undefined,
+      ipAddress,
       userAgent: request.headers.get('user-agent') || undefined,
       referrer: request.headers.get('referer') || undefined,
     })

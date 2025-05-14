@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { UrlResponse } from '@/schemas'
 import { QrCode } from 'lucide-react'
+import Image from 'next/image'
 
 interface RecentUrlsProps {
   urls: UrlResponse[]
@@ -96,10 +97,12 @@ export function RecentUrls({ urls }: RecentUrlsProps) {
             </div>
             {url.qrCode && expandedUrlId === url.id && (
               <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col items-center">
-                <img
+                <Image
                   src={url.qrCode}
                   alt="QR Code"
-                  className="w-48 h-48 mb-2"
+                  width={128}
+                  height={128}
+                  className="rounded"
                 />
                 <button
                   onClick={(e) => {

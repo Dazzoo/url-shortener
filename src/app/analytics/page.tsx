@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import type { UrlResponse } from '@/schemas'
-import { FileBarChart, Link as LinkIcon } from 'lucide-react'
+import { Link as LinkIcon } from 'lucide-react'
 import { UrlList } from '@/components/analytics/UrlList'
-import { AnalyticsOverview } from '@/components/analytics/AnalyticsOverview'
-import { TopItemsList } from '@/components/analytics/TopItemsList'
 import { localStorageUtils } from '@/lib/localStorage'
 import { getAnalytics } from '@/web-services/analytics'
 import Link from 'next/link'
@@ -71,7 +69,7 @@ export default function AnalyticsPage() {
             <LinkIcon className="h-16 w-16 mx-auto text-gray-400" />
             <h3 className="mt-4 text-lg font-medium text-gray-900">No URLs Found</h3>
             <p className="mt-2 text-sm text-gray-500">
-              You haven't created any shortened URLs yet. Create your first URL to start tracking analytics.
+              You haven&apos;t created any shortened URLs yet. Create your first URL to start tracking analytics.
             </p>
             <div className="mt-6">
               <Link

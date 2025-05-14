@@ -2,9 +2,11 @@ import { prisma } from '@/lib/db'
 import { nanoid } from 'nanoid'
 import { Prisma } from '@prisma/client'
 import { RedisService } from './redisService'
-import { urlResponseSchema, type CreateUrlRequest } from '@/schemas/url'
+import { urlResponseSchema, type CreateUrlRequest, UrlResponse } from '@/schemas/url'
 import QRCode from 'qrcode'
 import { generateQRCode } from '@/lib/qrCode'
+import { UAParser } from 'ua-parser-js'
+import { GeoService } from './geoService'
 
 
 export class UrlService {
@@ -178,11 +180,24 @@ export class UrlService {
     userAgent?: string
     referrer?: string
   }) {
+    console.log('Recording analytics with IP:', analytics.ipAddress)
+    
+    const parser = new UAParser(analytics.userAgent)
+    const device = parser.getDevice().type || 'desktop'
+    const browser = parser.getBrowser().name
+    const os = parser.getOS().name
+
+    // Get country asynchronously
+    const country = await GeoService.getCountryFromIP(analytics.ipAddress || '')
+    console.log('Detected country:', country)
+
     return prisma.analytics.create({
       data: {
         urlId,
         ...analytics,
-      },
+        device: `${device}${browser ? ` (${browser})` : ''}${os ? ` - ${os}` : ''}`,
+        country
+      }
     })
   }
 

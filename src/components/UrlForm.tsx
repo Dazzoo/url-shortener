@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { createUrl } from '@/web-services/urls'
 import type { CreateUrlRequest, UrlResponse } from '@/schemas/url'
 import { localStorageUtils } from '@/lib/localStorage'
+import Image from 'next/image'
 
 interface UrlFormProps {
   onUrlCreated: (url: UrlResponse) => void
@@ -65,10 +68,12 @@ export function UrlForm({ onUrlCreated }: UrlFormProps) {
 
   const renderQRCode = (qrCodeData: string) => (
     <div className="mt-4 flex flex-col items-center">
-      <img
+      <Image
         src={qrCodeData}
         alt="QR Code"
-        className="w-48 h-48 mb-2"
+        width={200}
+        height={200}
+        className="rounded-lg"
       />
       <button
         onClick={(e) => {
