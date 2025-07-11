@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import type { UrlResponse } from '@/schemas'
-import { Link as LinkIcon } from 'lucide-react'
+import { AnalyticsContent } from '@/components/analytics/AnalyticsContent'
 import { UrlList } from '@/components/analytics/UrlList'
 import { localStorageUtils } from '@/lib/localStorage'
+import type { UrlResponse } from '@/schemas'
 import { getAnalytics } from '@/web-services/analytics'
+import { Link as LinkIcon } from 'lucide-react'
 import Link from 'next/link'
-import { AnalyticsContent } from '@/components/analytics/AnalyticsContent'
+import { useEffect, useState } from 'react'
 
 interface AnalyticsData {
   urlId: string
@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
 
   if (urls.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="flex-1 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="flex-1 bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">

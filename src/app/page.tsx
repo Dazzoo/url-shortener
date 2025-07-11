@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import type { UrlResponse } from '@/schemas/url'
-import { UrlForm } from '@/components/UrlForm'
-import { RecentUrls } from '@/components/RecentUrls'
 import { FeatureCard } from '@/components/FeatureCard'
-import { QrCode, FileBarChart, Link } from 'lucide-react'
+import { RecentUrls } from '@/components/RecentUrls'
+import { UrlForm } from '@/components/UrlForm'
 import { localStorageUtils } from '@/lib/localStorage'
+import type { UrlResponse } from '@/schemas/url'
+import { FileBarChart, Link, QrCode } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [recentUrls, setRecentUrls] = useState<UrlResponse[]>([])
@@ -29,7 +29,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="flex-1 bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
